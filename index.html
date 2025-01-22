@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>食農教育遊戲</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f8ff;
+            font-family: Arial, sans-serif;
+            padding: 10px;
+        }
+        
+        h1 {
+            font-size: clamp(1.2rem, 5vw, 2rem);
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .game-area {
+            width: 100%;
+            max-width: 800px;
+            height: 50vh;
+            min-height: 300px;
+            position: relative;
+            background: #fff;
+            margin: 10px 0;
+            border: 2px solid #333;
+            overflow: hidden;
+        }
+        
+        .sides {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            position: absolute;
+            top: 20px;
+        }
+        
+        .side {
+            padding: 10px;
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            font-weight: bold;
+        }
+        
+        .left-side {
+            color: #2ecc71;
+        }
+        
+        .right-side {
+            color: #e74c3c;
+        }
+        
+        .character {
+            position: absolute;
+            width: 40px;
+            height: 70px;
+            left: calc(50% - 20px);
+            bottom: 50px;
+            transition: left 0.5s ease-in-out;
+            background: #fff;
+            border-radius: 20px;
+            transform: rotate(-10deg);
+            box-shadow: 
+                -2px -2px 4px rgba(0,0,0,0.1) inset,
+                2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 20px;
+        }
+
+        .eyes {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #333;
+            border-radius: 50%;
+            top: 15px;
+            left: 10px;
+            box-shadow: 15px 0 0 #333;
+        }
+
+        .cheeks {
+            position: absolute;
+            width: 8px;
+            height: 4px;
+            background: #ffdddd;
+            border-radius: 50%;
+            top: 22px;
+            left: 6px;
+            box-shadow: 20px 0 0 #ffdddd;
+        }
+
+        .mouth {
+            position: absolute;
+            width: 20px;
+            height: 10px;
+            border-bottom: 2px solid #333;
+            border-radius: 0 0 10px 10px;
+            top: 25px;
+            left: 10px;
+        }
+        
+        .question {
+            text-align: center;
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            margin: 10px;
+            padding: 10px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 800px;
+            justify-content: center;
+        }
+        
+        button {
+            flex: 1;
+            max-width: 200px;
+            padding: 15px;
+            font-size: clamp(1rem, 4vw, 1.2rem);
+            cursor: pointer;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        
+        button:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+        }
+
+        @media (hover: none) {
+            button:hover {
+                transform: none;
+            }
+        }
+        
+        .score {
+            font-size: clamp(1rem, 4vw, 1.2rem);
+            margin: 10px 0;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(1.5rem, 6vw, 2rem);
+            font-weight: bold;
+            padding: 15px 30px;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 100;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .feedback.correct {
+            background-color: rgba(46, 204, 113, 0.9);
+            color: white;
+            animation: feedbackAnimation 1s ease-out;
+        }
+
+        .feedback.wrong {
+            background-color: rgba(231, 76, 60, 0.9);
+            color: white;
+            animation: feedbackAnimation 1s ease-out;
+        }
+
+        @keyframes feedbackAnimation {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            80% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+        }
+
+        .center-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>食農教育遊戲：選邊站</h1>
+    <div class="question" id="question">請等待...</div>
+    <div class="game-area">
+        <div class="sides">
+            <div class="side left-side">珍惜食物</div>
+            <div class="side right-side">浪費食物</div>
+        </div>
+        <div class="center-line"></div>
+        <div class="character" id="character">
+            <div class="face">
+                <div class="eyes"></div>
+                <div class="cheeks"></div>
+                <div class="mouth"></div>
+            </div>
+        </div>
+        <div id="feedback" class="feedback"></div>
+    </div>
+    <div class="controls">
+        <button onclick="makeChoice('left')" ontouchstart="makeChoice('left')" id="leftBtn">← 往左</button>
+        <button onclick="makeChoice('right')" ontouchstart="makeChoice('right')" id="rightBtn">往右 →</button>
+    </div>
+    <div class="score" id="score">得分: 0</div>
+
+    <script>
+        const questions = [
+            {
+                text: "購買適量的食材，避免採買過多",
+                correct: "right"
+            },
+            {
+                text: "把剩飯剩菜製作成新料理",
+                correct: "left"
+            },
+            {
+                text: "確認冰箱庫存再去採購",
+                correct: "right"
+            },
+            {
+                text: "把即將過期的食材優先使用",
+                correct: "left"
+            },
+            {
+                text: "製作餐點時考慮食用人數",
+                correct: "right"
+            },
+            {
+                text: "珍惜每一粒米飯",
+                correct: "left"
+            },
+            {
+                text: "使用剩食製作堆肥",
+                correct: "right"
+            },
+            {
+                text: "善用食材的每個部分",
+                correct: "left"
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        const character = document.getElementById('character');
+        const questionElement = document.getElementById('question');
+        const scoreElement = document.getElementById('score');
+        const feedbackElement = document.getElementById('feedback');
+
+        // 添加觸控支援
+        document.querySelector('.game-area').addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        }, {passive: false});
+
+        function showFeedback(isCorrect) {
+            feedbackElement.textContent = isCorrect ? '答對了！' : '答錯了！';
+            feedbackElement.className = `feedback ${isCorrect ? 'correct' : 'wrong'}`;
+            feedbackElement.style.animation = 'none';
+            feedbackElement.offsetHeight;
+            feedbackElement.style.animation = 'feedbackAnimation 1s ease-out';
+        }
+
+        function updateQuestion() {
+            if (currentQuestion < questions.length) {
+                questionElement.textContent = questions[currentQuestion].text;
+            } else {
+                questionElement.textContent = `遊戲結束！總得分：${score}/${questions.length}`;
+                document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+            }
+        }
+
+        function makeChoice(choice) {
+            if (currentQuestion >= questions.length) return;
+
+            // 禁用按鈕防止連續點擊
+            document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+
+            const correct = questions[currentQuestion].correct;
+            const position = choice === 'left' ? '30%' : '70%';
+            character.style.left = position;
+
+            setTimeout(() => {
+                const isCorrect = choice === correct;
+                showFeedback(isCorrect);
+                
+                if (isCorrect) {
+                    score++;
+                }
+                
+                scoreElement.textContent = `得分: ${score}`;
+                
+                setTimeout(() => {
+                    currentQuestion++;
+                    character.style.left = 'calc(50% - 20px)';
+                    updateQuestion();
+                    // 重新啟用按鈕
+                    document.querySelectorAll('button').forEach(btn => btn.disabled = false);
+                }, 1000);
+            }, 600);
+        }
+
+        // 添加鍵盤控制
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+                makeChoice('left');
+            } else if (e.key === 'ArrowRight') {
+                makeChoice('right');
+            }
+        });
+
+        updateQuestion();
+    </script>
+</body>
+</html>
